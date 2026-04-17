@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📝 Веб-редактор текста | WYSIWYG</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: linear-gradient(145deg, #f0f2f5 0%, #e6e9f0 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+        padding: 20px;
+      }
+
+      .editor-container {
+        max-width: 950px;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 28px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12),
+          0 6px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(2px);
+        transition: box-shadow 0.2s ease;
+      }
+
+      .editor-container:hover {
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15);
+      }
+
+      /* Заголовок */
+      .editor-header {
+        padding: 18px 24px;
+        background: #fafbfc;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .editor-header h2 {
+        font-weight: 500;
+        font-size: 1.6rem;
+        letter-spacing: -0.01em;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .editor-header h2 i {
+        font-size: 1.8rem;
+      }
+
+      .mode-badge {
+        background: #e9eef4;
+        padding: 6px 14px;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #334155;
+        border: 1px solid #cfdde9;
+      }
+
+      /* Панель инструментов */
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 14px 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      .tool-group {
+        display: flex;
+        gap: 2px;
+        background: #f8fafc;
+        padding: 3px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .tool-btn {
+        background: transparent;
+        border: none;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #334155;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        line-height: 1;
+        padding: 0;
+      }
+
+      .tool-btn:hover {
+        background: #e9eef4;
+        color: #0f172a;
+      }
+
+      .tool-btn.active {
+        background: #1e293b;
+        color: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .select-wrapper {
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 0 6px;
+        margin: 0 4px;
+      }
+
+      .select-wrapper select {
+        background: transparent;
+        border: none;
+        padding: 8px 6px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #1e293b;
+        outline: none;
+        cursor: pointer;
+        border-radius: 20px;
+        min-width: 130px;
+      }
+
+      .separator {
+        width: 1px;
+        height: 32px;
+        background: #d1d9e6;
+        margin: 0 8px;
+      }
+
+      /* Кнопки с иконками (текстовые эмуляции) */
+      .icon-bold::before {
+        content: 'B';
+        font-weight: 700;
+      }
+      .icon-italic::before {
+        content: 'I';
+        font-style: italic;
+        font-weight: 500;
+      }
+      .icon-underline::before {
+        content: 'U';
+        text-decoration: underline;
+        font-weight: 500;
+      }
+      .icon-list-ol::before {
+        content: '1.';
+        font-weight: 600;
+        font-size: 1rem;
+      }
+      .icon-list-ul::before {
+        content: '•';
+        font-size: 1.6rem;
+        line-height: 1;
+      }
+      .icon-link::before {
+        content: '🔗';
+        font-size: 1.2rem;
+      }
+      .icon-unlink::before {
+        content: '✂️';
+        font-size: 1.1rem;
+      }
+      .icon-undo::before {
+        content: '↩️';
+      }
+      .icon-redo::before {
+        content: '↪️';
+      }
+      .icon-html::before {
+        content: '<>';
+        font-weight: 600;
+      }
+      .icon-clear::before {
+        content: '🧹';
+      }
+
+      /* Область редактирования */
+      .editor-area {
+        padding: 24px 26px;
+        min-height: 380px;
+        background: #fdfdfe;
+      }
+
+      #editor {
+        background: white;
+        border-radius: 18px;
+        padding: 22px 26px;
+        min-height: 340px;
+        max-height: 520px;
+        overflow-y: auto;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02), 0 0 0 1px #eef2f6;
+        font-size: 1rem;
+        line-height: 1.65;
+        color: #0b1e2e;
+        outline: none;
+        transition: box-shadow 0.2s;
+      }
+
+      #editor:focus {
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.03), 0 0 0 2px #bdd3eb;
+      }
+
+      /* HTML режим: textarea */
+      .html-textarea {
+        width: 100%;
+        min-height: 340px;
+        max-height: 520px;
+        padding: 22px 26px;
+        font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        background: #1e1e2f;
+        color: #e3e3f0;
+        border: none;
+        border-radius: 18px;
+        resize: vertical;
+        outline: none;
+        box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.3);
+        border: 1px solid #3c3c5a;
+      }
+
+      .html-textarea:focus {
+        box-shadow: inset 0 4px 12px #00000033, 0 0 0 2px #7aa3c2;
+      }
+
+      /* Нижняя панель */
+      .editor-footer {
+        padding: 16px 24px;
+        background: #fafbfc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .status {
+        font-size: 0.9rem;
+        color: #526477;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .btn {
+        background: white;
+        border: 1px solid #d0dae8;
+        padding: 8px 18px;
+        border-radius: 40px;
+        font-weight: 500;
+        color: #1f2a41;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.15s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      }
+
+      .btn-primary {
+        background: #1e293b;
+        border-color: #1e293b;
+        color: white;
+        box-shadow: 0 6px 12px rgba(30, 41, 59, 0.15);
+      }
+
+      .btn-primary:hover {
+        background: #0f172a;
+      }
+
+      .btn:hover {
+        background: #eef2f6;
+      }
+
+      .btn-primary:hover {
+        background: #0b1522;
+      }
+
+      /* Стили внутри редактируемого контента */
+      #editor h1,
+      #editor h2,
+      #editor h3 {
+        margin-top: 0.8em;
+        margin-bottom: 0.3em;
+        color: #0b1e2e;
+      }
+      #editor p {
+        margin-bottom: 1em;
+      }
+      #editor ul,
+      #editor ol {
+        padding-left: 2em;
+        margin-bottom: 1em;
+      }
+      #editor a {
+        color: #2563eb;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="editor-container">
+      <div class="editor-header">
+        <h2><span>📄</span> Текстовый редактор</h2>
+        <span class="mode-badge" id="modeIndicator">✏️ Визуальный режим</span>
+      </div>
+
+      <!-- Панель инструментов -->
+      <div class="toolbar">
+        <div class="tool-group">
+          <button
+            class="tool-btn icon-bold"
+            data-command="bold"
+            title="Жирный (Ctrl+B)"
+          ></button>
+          <button
+            class="tool-btn icon-italic"
+            data-command="italic"
+            title="Курсив (Ctrl+I)"
+          ></button>
+          <button
+            class="tool-btn icon-underline"
+            data-command="underline"
+            title="Подчёркнутый (Ctrl+U)"
+          ></button>
+        </div>
+
+        <div class="tool-group">
+          <button
+            class="tool-btn icon-list-ol"
+            data-command="insertOrderedList"
+            title="Нумерованный список"
+          ></button>
+          <button
+            class="tool-btn icon-list-ul"
+            data-command="insertUnorderedList"
+            title="Маркированный список"
+          ></button>
+        </div>
+
+        <div class="select-wrapper">
+          <select id="formatBlock" title="Стиль абзаца">
+            <option value="p">📄 Абзац</option>
+            <option value="h1">📌 Заголовок 1</option>
+            <option value="h2">📌 Заголовок 2</option>
+            <option value="h3">📌 Заголовок 3</option>
+            <option value="pre">📋 Моноширинный</option>
+          </select>
+        </div>
+
+        <div class="tool-group">
+          <button
+            class="tool-btn icon-link"
+            id="createLinkBtn"
+            title="Вставить ссылку (Ctrl+K)"
+          >
+            🔗
+          </button>
+          <button
+            class="tool-btn icon-unlink"
+            data-command="unlink"
+            title="Убрать ссылку"
+          >
+            ✂️
+          </button>
+        </div>
+
+        <span class="separator"></span>
+
+        <div class="tool-group">
+          <button
+            class="tool-btn icon-undo"
+            data-command="undo"
+            title="Отменить (Ctrl+Z)"
+          ></button>
+          <button
+            class="tool-btn icon-redo"
+            data-command="redo"
+            title="Повторить (Ctrl+Y)"
+          ></button>
+        </div>
+
+        <div class="tool-group">
+          <button
+            class="tool-btn icon-html"
+            id="toggleHtmlMode"
+            title="Переключить HTML / Визуальный"
+          ></button>
+          <button
+            class="tool-btn icon-clear"
+            id="clearFormatBtn"
+            title="Очистить форматирование"
+          >
+            🧹
+          </button>
+        </div>
+      </div>
+
+      <!-- Редактируемая область (WYSIWYG / HTML) -->
+      <div class="editor-area">
+        <div
+          id="editor"
+          contenteditable="true"
+          role="textbox"
+          aria-multiline="true"
+        >
+          <h2>✨ Добро пожаловать!</h2>
+          <p>
+            Это <strong>веб-редактор</strong> с поддержкой форматирования.
+            Выделите текст и используйте кнопки панели инструментов или горячие
+            клавиши.
+          </p>
+          <ul>
+            <li>Можно <em>создавать списки</em></li>
+            <li>Менять <u>стили</u> заголовков</li>
+            <li>Вставлять <a href="#">ссылки</a></li>
+          </ul>
+          <p>
+            Попробуйте переключиться в <strong>HTML-режим</strong> (кнопка
+            &lt;&gt;), чтобы редактировать исходный код.
+          </p>
+        </div>
+        <!-- Скрытая textarea для режима HTML -->
+        <textarea
+          id="htmlSource"
+          class="html-textarea"
+          style="display: none"
+          placeholder="Введите HTML-код..."
+        ></textarea>
+      </div>
+
+      <!-- Нижняя панель -->
+      <div class="editor-footer">
+        <div class="status">
+          <span>📋 Символов: <span id="charCount">0</span></span>
+          <span>•</span>
+          <span>🖱️ Ctrl+B / I / U / K</span>
+        </div>
+        <div class="actions">
+          <button class="btn" id="exportHtmlBtn">📤 Получить HTML</button>
+          <button class="btn btn-primary" id="clearAllBtn">
+            🧽 Очистить всё
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      ;(function () {
+        'use strict'
+
+        // ----- Элементы -----
+        const editorDiv = document.getElementById('editor')
+        const htmlTextarea = document.getElementById('htmlSource')
+        const toggleHtmlBtn = document.getElementById('toggleHtmlMode')
+        const modeIndicator = document.getElementById('modeIndicator')
+        const charCountSpan = document.getElementById('charCount')
+        const formatBlockSelect = document.getElementById('formatBlock')
+        const createLinkBtn = document.getElementById('createLinkBtn')
+        const clearFormatBtn = document.getElementById('clearFormatBtn')
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn')
+        const clearAllBtn = document.getElementById('clearAllBtn')
+
+        // Флаги режима
+        let isHtmlMode = false
+
+        // ----- Утилиты -----
+        function updateCharCount() {
+          const text = isHtmlMode ? htmlTextarea.value : editorDiv.innerText
+          charCountSpan.textContent = text.length
+        }
+
+        // Обновление активных состояний кнопок (жирный/курсив/подчерк)
+        function updateToolbarState() {
+          if (isHtmlMode) return // в HTML режиме не применяем
+
+          const commands = [
+            'bold',
+            'italic',
+            'underline',
+            'insertOrderedList',
+            'insertUnorderedList'
+          ]
+          commands.forEach(cmd => {
+            const btn = document.querySelector(`[data-command="${cmd}"]`)
+            if (btn) {
+              const isActive = document.queryCommandState(cmd)
+              btn.classList.toggle('active', isActive)
+            }
+          })
+
+          // Определяем текущий формат блока
+          const block = document.queryCommandValue('formatBlock')
+          if (block && formatBlockSelect) {
+            // Приводим к нижнему регистру для сравнения
+            const normalized = block.toLowerCase()
+            const options = formatBlockSelect.options
+            let matched = false
+            for (let opt of options) {
+              if (opt.value === normalized) {
+                formatBlockSelect.value = normalized
+                matched = true
+                break
+              }
+            }
+            if (!matched) formatBlockSelect.value = 'p'
+          }
+        }
+
+        // Выполнение команды документа
+        function execCommand(command, value = null) {
+          if (isHtmlMode) {
+            alert('Сначала переключитесь в визуальный режим (кнопка <>)')
+            return
+          }
+          editorDiv.focus()
+          document.execCommand(command, false, value)
+          updateToolbarState()
+          updateCharCount()
+        }
+
+        // Переключение режимов (WYSIWYG <-> HTML)
+        function setMode(htmlMode) {
+          isHtmlMode = htmlMode
+
+          if (htmlMode) {
+            // Переносим содержимое из editor в textarea
+            htmlTextarea.value = editorDiv.innerHTML
+            editorDiv.style.display = 'none'
+            htmlTextarea.style.display = 'block'
+            modeIndicator.textContent = '🔧 Режим HTML'
+            toggleHtmlBtn.classList.add('active')
+            // Отключаем визуальные кнопки (можно просто не реагировать)
+          } else {
+            // Визуальный режим: перенос из textarea в editor
+            editorDiv.innerHTML = htmlTextarea.value
+            htmlTextarea.style.display = 'none'
+            editorDiv.style.display = 'block'
+            modeIndicator.textContent = '✏️ Визуальный режим'
+            toggleHtmlBtn.classList.remove('active')
+            // Восстановим состояние кнопок
+            editorDiv.focus()
+            updateToolbarState()
+          }
+          updateCharCount()
+        }
+
+        // Синхронизация счётчика при изменении textarea
+        function syncFromTextarea() {
+          if (isHtmlMode) {
+            updateCharCount()
+          }
+        }
+
+        // Обработка кликов на панели инструментов
+        function handleToolbarClick(e) {
+          const btn = e.target.closest('.tool-btn')
+          if (!btn) return
+
+          const command = btn.getAttribute('data-command')
+          if (command) {
+            e.preventDefault()
+            execCommand(command)
+            return
+          }
+
+          // Специальные кнопки (без data-command)
+          if (btn.id === 'createLinkBtn') {
+            e.preventDefault()
+            if (isHtmlMode) {
+              alert('Вставка ссылки доступна только в визуальном режиме')
+              return
+            }
+            const url = prompt('Введите URL ссылки:', 'https://')
+            if (url) {
+              execCommand('createLink', url)
+            }
+          }
+
+          if (btn.id === 'clearFormatBtn') {
+            e.preventDefault()
+            if (isHtmlMode) return
+            execCommand('removeFormat')
+            // Доп. очистка заголовков (иногда не снимается)
+            execCommand('formatBlock', 'p')
+            updateToolbarState()
+          }
+        }
+
+        // Обработка селекта форматов
+        function handleFormatBlockChange(e) {
+          if (isHtmlMode) {
+            formatBlockSelect.value = 'p'
+            return
+          }
+          const value = formatBlockSelect.value
+          execCommand('formatBlock', value)
+          // после смены блока обновим подсветку
+          setTimeout(updateToolbarState, 10)
+        }
+
+        // ----- Инициализация и события -----
+        function init() {
+          // Первичный подсчёт символов
+          updateCharCount()
+
+          // Отслеживание изменений в редакторе
+          editorDiv.addEventListener('input', () => {
+            if (!isHtmlMode) {
+              updateCharCount()
+              updateToolbarState()
+            }
+          })
+
+          editorDiv.addEventListener('keyup', updateToolbarState)
+          editorDiv.addEventListener('mouseup', updateToolbarState)
+          editorDiv.addEventListener('focus', updateToolbarState)
+          editorDiv.addEventListener('blur', () =>
+            setTimeout(updateToolbarState, 20)
+          )
+
+          // Для HTML textarea
+          htmlTextarea.addEventListener('input', syncFromTextarea)
+
+          // Клики по тулбару
+          document
+            .querySelector('.toolbar')
+            .addEventListener('click', handleToolbarClick)
+
+          // Селект форматов
+          formatBlockSelect.addEventListener('change', handleFormatBlockChange)
+
+          // Переключение режима HTML
+          toggleHtmlBtn.addEventListener('click', e => {
+            e.preventDefault()
+            setMode(!isHtmlMode)
+          })
+
+          // Кнопка "Получить HTML"
+          exportHtmlBtn.addEventListener('click', () => {
+            const htmlContent = isHtmlMode
+              ? htmlTextarea.value
+              : editorDiv.innerHTML
+            // Просто выводим в модальном окне, также копируем в буфер обмена если возможно
+            navigator.clipboard
+              ?.writeText(htmlContent)
+              .then(() => {
+                alert(
+                  '✅ HTML скопирован в буфер обмена!\n\n' +
+                    htmlContent.slice(0, 300) +
+                    (htmlContent.length > 300 ? '…' : '')
+                )
+              })
+              .catch(() => {
+                alert('📋 HTML-код:\n\n' + htmlContent)
+              })
+          })
+
+          // Очистить всё
+          clearAllBtn.addEventListener('click', () => {
+            if (confirm('Очистить содержимое редактора?')) {
+              if (isHtmlMode) {
+                htmlTextarea.value = ''
+              } else {
+                editorDiv.innerHTML = '<p><br></p>' // чистый параграф
+              }
+              updateCharCount()
+              if (!isHtmlMode) updateToolbarState()
+            }
+          })
+
+          // Горячие клавиши (Ctrl+B, I, U, K, Z, Y)
+          document.addEventListener('keydown', e => {
+            if (!isHtmlMode && (e.ctrlKey || e.metaKey)) {
+              const key = e.key.toLowerCase()
+              let cmd = null
+              let prevent = true
+              if (key === 'b') cmd = 'bold'
+              else if (key === 'i') cmd = 'italic'
+              else if (key === 'u') cmd = 'underline'
+              else if (key === 'k') {
+                e.preventDefault()
+                const url = prompt('Введите URL ссылки:')
+                if (url) execCommand('createLink', url)
+                return
+              } else if (key === 'z') {
+                execCommand('undo')
+                e.preventDefault()
+                return
+              } else if (key === 'y') {
+                execCommand('redo')
+                e.preventDefault()
+                return
+              } else prevent = false
+
+              if (cmd) {
+                e.preventDefault()
+                execCommand(cmd)
+              }
+            }
+          })
+
+          // При вставке из буфера обновляем состояние
+          editorDiv.addEventListener('paste', () =>
+            setTimeout(() => {
+              updateCharCount()
+              updateToolbarState()
+            }, 20)
+          )
+
+          // Обработка, чтобы случайно не потерять изменения при переключении туда-сюда
+          // Синхронизируем визуальные изменения
+          const observer = new MutationObserver(() => {
+            if (!isHtmlMode) {
+              updateCharCount()
+            }
+          })
+          observer.observe(editorDiv, {
+            childList: true,
+            subtree: true,
+            characterData: true
+          })
+
+          // При загрузке установим корректное состояние
+          updateToolbarState()
+        }
+
+        init()
+      })()
+    </script>
+  </body>
+</html>
