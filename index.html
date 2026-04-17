@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>📝 Advanced Web Editor | Вкладки, темы, обучение</title>
-    <!-- Font Awesome для иконок -->
+    <title>📝 WebEditor Pro | Вкладки, темы, файлы</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
@@ -23,19 +22,15 @@
         justify-content: center;
         align-items: center;
         padding: 20px;
-        transition: background 0.3s, color 0.3s;
+        transition: background 0.3s;
       }
 
-      /* Светлая тема (по умолчанию) */
       body.light-theme {
         background: linear-gradient(145deg, #f0f2f5 0%, #e6e9f0 100%);
-        color: #1e293b;
       }
 
-      /* Тёмная тема */
       body.dark-theme {
         background: linear-gradient(145deg, #1a1f2b 0%, #0f131a 100%);
-        color: #e2e8f0;
       }
 
       .app-container {
@@ -46,27 +41,31 @@
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         overflow: hidden;
         border: 1px solid var(--border-color);
-        backdrop-filter: blur(2px);
-        transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        transition: background 0.3s, border-color 0.3s;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
       }
 
-      /* Переменные для тем */
+      /* Переменные тем */
       body.light-theme {
         --bg-primary: #ffffff;
         --bg-secondary: #fafbfc;
         --bg-tertiary: #f8fafc;
         --border-color: #e2e8f0;
         --text-primary: #1e293b;
-        --text-secondary: #526477;
-        --accent-color: #2563eb;
+        --text-secondary: #64748b;
+        --accent-color: #3b82f6;
         --toolbar-bg: #ffffff;
         --tool-btn-bg: #f8fafc;
-        --tool-btn-hover: #e9eef4;
+        --tool-btn-hover: #e2e8f0;
         --editor-bg: #fdfdfe;
-        --editor-text: #0b1e2e;
+        --editor-text: #0f172a;
         --tab-active: #ffffff;
         --tab-inactive: #f1f5f9;
-        --shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        --scrollbar-track: #f1f5f9;
+        --scrollbar-thumb: #cbd5e1;
+        --modal-bg: #ffffff;
       }
 
       body.dark-theme {
@@ -75,7 +74,7 @@
         --bg-tertiary: #252c3b;
         --border-color: #3a4458;
         --text-primary: #eef2fb;
-        --text-secondary: #a6b6d9;
+        --text-secondary: #94a3b8;
         --accent-color: #60a5fa;
         --toolbar-bg: #2a3241;
         --tool-btn-bg: #323c4e;
@@ -84,24 +83,44 @@
         --editor-text: #e2e8f0;
         --tab-active: #2a3241;
         --tab-inactive: #1e2430;
-        --shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        --scrollbar-track: #1e2430;
+        --scrollbar-thumb: #475569;
+        --modal-bg: #2a3241;
       }
 
-      /* Заголовок */
+      /* Кастомный скроллбар */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-color);
+      }
+
+      /* Шапка */
       .app-header {
-        padding: 18px 24px;
+        padding: 16px 24px;
         background: var(--bg-secondary);
         border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 15px;
       }
 
       .app-header h2 {
         font-weight: 500;
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         color: var(--text-primary);
         display: flex;
         align-items: center;
@@ -118,18 +137,20 @@
         background: var(--tool-btn-bg);
         border: 1px solid var(--border-color);
         color: var(--text-primary);
-        padding: 8px 16px;
-        border-radius: 40px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 1.2rem;
         transition: all 0.2s;
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
       }
 
       .theme-toggle:hover {
-        background: var(--tool-btn-hover);
+        background: var(--accent-color);
+        color: white;
       }
 
       .mode-badge {
@@ -142,20 +163,21 @@
         border: 1px solid var(--border-color);
       }
 
-      /* Система вкладок (как в мессенджерах) */
+      /* Вкладки - без горизонтальной прокрутки, с переносом */
       .tabs-container {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         background: var(--bg-tertiary);
         border-bottom: 1px solid var(--border-color);
-        padding: 0 16px;
-        overflow-x: auto;
-        scrollbar-width: thin;
+        padding: 8px 16px 0;
+        flex-wrap: wrap;
+        gap: 4px;
       }
 
       .tabs-list {
         display: flex;
         flex: 1;
+        flex-wrap: wrap;
         gap: 2px;
       }
 
@@ -163,24 +185,22 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 20px;
+        padding: 10px 16px;
         background: var(--tab-inactive);
         border: 1px solid var(--border-color);
         border-bottom: none;
-        border-radius: 12px 12px 0 0;
+        border-radius: 10px 10px 0 0;
         color: var(--text-secondary);
         cursor: pointer;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         transition: all 0.15s;
         white-space: nowrap;
-        margin-right: 2px;
       }
 
       .tab.active {
         background: var(--tab-active);
         color: var(--accent-color);
         font-weight: 500;
-        transform: translateY(1px);
         border-bottom: 2px solid var(--accent-color);
       }
 
@@ -197,12 +217,10 @@
         font-size: 1.1rem;
         padding: 0 4px;
         border-radius: 4px;
-        transition: all 0.1s;
       }
 
       .tab-close:hover {
         color: #ef4444;
-        background: rgba(239, 68, 68, 0.1);
       }
 
       .add-tab-btn {
@@ -217,8 +235,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-left: 8px;
-        transition: all 0.15s;
+        margin-bottom: 4px;
       }
 
       .add-tab-btn:hover {
@@ -231,7 +248,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        padding: 14px 20px;
+        padding: 12px 20px;
         background: var(--toolbar-bg);
         border-bottom: 1px solid var(--border-color);
       }
@@ -241,17 +258,17 @@
         gap: 2px;
         background: var(--tool-btn-bg);
         padding: 3px;
-        border-radius: 14px;
+        border-radius: 12px;
         border: 1px solid var(--border-color);
       }
 
       .tool-btn {
         background: transparent;
         border: none;
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        font-size: 1.1rem;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 1rem;
         color: var(--text-primary);
         cursor: pointer;
         display: flex;
@@ -283,7 +300,7 @@
         background: transparent;
         border: none;
         padding: 8px 6px;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: var(--text-primary);
         outline: none;
         cursor: pointer;
@@ -297,30 +314,26 @@
 
       .separator {
         width: 1px;
-        height: 32px;
+        height: 30px;
         background: var(--border-color);
-        margin: 0 8px;
+        margin: 0 6px;
       }
 
       /* Область редактора */
       .editor-area {
-        padding: 24px 26px;
+        padding: 20px 24px;
         background: var(--bg-secondary);
-        min-height: 400px;
-      }
-
-      .editor-wrapper {
-        position: relative;
+        flex: 1;
+        overflow: auto;
       }
 
       #editor {
         background: var(--editor-bg);
-        border-radius: 18px;
-        padding: 22px 26px;
-        min-height: 380px;
-        max-height: 550px;
+        border-radius: 16px;
+        padding: 20px 24px;
+        min-height: 300px;
+        max-height: 500px;
         overflow-y: auto;
-        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1);
         border: 1px solid var(--border-color);
         font-size: 1rem;
         line-height: 1.65;
@@ -330,58 +343,120 @@
 
       #editor:focus {
         border-color: var(--accent-color);
-        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15),
-          0 0 0 2px rgba(37, 99, 235, 0.1);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
 
       .html-textarea {
         width: 100%;
-        min-height: 380px;
-        max-height: 550px;
-        padding: 22px 26px;
-        font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
-        font-size: 0.95rem;
+        min-height: 300px;
+        max-height: 500px;
+        padding: 20px 24px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
         line-height: 1.6;
         background: #1e1e2f;
         color: #e3e3f0;
         border: 1px solid #3c3c5a;
-        border-radius: 18px;
+        border-radius: 16px;
         resize: vertical;
         outline: none;
+        overflow-y: auto;
       }
 
-      /* Панель обучения */
-      .learning-panel {
-        background: var(--bg-tertiary);
-        border-top: 1px solid var(--border-color);
-        padding: 16px 24px;
+      /* Стили внутри редактора */
+      #editor h1,
+      #editor h2,
+      #editor h3 {
+        margin: 0.8em 0 0.3em;
+        color: var(--editor-text);
+      }
+      #editor p {
+        margin-bottom: 1em;
+      }
+      #editor ul,
+      #editor ol {
+        padding-left: 2em;
+        margin-bottom: 1em;
+      }
+      #editor a {
+        color: var(--accent-color);
+      }
+
+      /* Модальное окно */
+      .modal {
         display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
       }
 
-      .learning-panel.show {
-        display: block;
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: var(--modal-bg);
+        border-radius: 24px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-header h3 {
+        color: var(--text-primary);
+        font-size: 1.3rem;
+      }
+
+      .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 8px;
+      }
+
+      .modal-close:hover {
+        background: var(--tool-btn-hover);
       }
 
       .learning-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 12px;
-        margin-top: 12px;
       }
 
       .learning-item {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 10px 14px;
-        background: var(--bg-primary);
+        padding: 12px;
+        background: var(--bg-tertiary);
         border-radius: 12px;
         border: 1px solid var(--border-color);
       }
 
       .learning-icon {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         background: var(--accent-color);
         color: white;
         border-radius: 10px;
@@ -391,14 +466,10 @@
         font-size: 1.2rem;
       }
 
-      .learning-text {
-        flex: 1;
-      }
-
       .learning-text strong {
         display: block;
         color: var(--text-primary);
-        margin-bottom: 2px;
+        margin-bottom: 4px;
       }
 
       .learning-text small {
@@ -406,15 +477,44 @@
         font-size: 0.85rem;
       }
 
+      .save-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .save-option {
+        padding: 14px 18px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .save-option:hover {
+        background: var(--accent-color);
+        color: white;
+        border-color: var(--accent-color);
+      }
+
+      .save-option i {
+        font-size: 1.5rem;
+        width: 30px;
+      }
+
       /* Нижняя панель */
       .editor-footer {
-        padding: 16px 24px;
+        padding: 14px 24px;
         background: var(--bg-secondary);
         border-top: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
       }
 
       .status {
@@ -427,14 +527,14 @@
 
       .actions {
         display: flex;
-        gap: 12px;
+        gap: 10px;
       }
 
       .btn {
         background: var(--bg-primary);
         border: 1px solid var(--border-color);
-        padding: 8px 18px;
-        border-radius: 40px;
+        padding: 8px 16px;
+        border-radius: 30px;
         font-weight: 500;
         color: var(--text-primary);
         cursor: pointer;
@@ -451,15 +551,14 @@
         color: white;
       }
 
-      .btn-primary:hover {
-        opacity: 0.9;
-      }
-
       .btn:hover {
         background: var(--tool-btn-hover);
       }
 
-      /* Загрузка файлов */
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
       .file-input {
         display: none;
       }
@@ -470,16 +569,20 @@
       <div class="app-header">
         <h2><i class="fas fa-pen-fancy"></i> WebEditor Pro</h2>
         <div class="header-controls">
-          <button class="theme-toggle" id="themeToggle">
-            <i class="fas fa-moon"></i> <span>Тёмная тема</span>
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            title="Переключить тему"
+          >
+            <i class="fas fa-moon"></i>
           </button>
           <span class="mode-badge" id="modeIndicator">
-            <i class="fas fa-eye"></i> Визуальный режим
+            <i class="fas fa-eye"></i> Визуальный
           </span>
         </div>
       </div>
 
-      <!-- Вкладки (как в мессенджерах) -->
+      <!-- Вкладки -->
       <div class="tabs-container">
         <div class="tabs-list" id="tabsList"></div>
         <button class="add-tab-btn" id="addTabBtn" title="Новая вкладка">
@@ -572,7 +675,7 @@
           <button
             class="tool-btn"
             id="toggleHtmlMode"
-            title="Переключить HTML / Визуальный"
+            title="HTML / Визуальный"
           >
             <i class="fas fa-code"></i>
           </button>
@@ -581,131 +684,46 @@
             id="clearFormatBtn"
             title="Очистить форматирование"
           >
-            <i class="fas fa-remove-format"></i>
+            <i class="fas fa-eraser"></i>
           </button>
-          <button
-            class="tool-btn"
-            id="toggleLearningBtn"
-            title="Показать/скрыть обучение"
-          >
-            <i class="fas fa-graduation-cap"></i>
+          <button class="tool-btn" id="showLearningBtn" title="Обучение">
+            <i class="fas fa-question"></i>
           </button>
-        </div>
-      </div>
-
-      <!-- Панель обучения -->
-      <div class="learning-panel" id="learningPanel">
-        <h3 style="color: var(--text-primary); margin-bottom: 8px">
-          <i class="fas fa-info-circle"></i> Обучение: что делает каждая кнопка
-        </h3>
-        <div class="learning-grid">
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-bold"></i></div>
-            <div class="learning-text">
-              <strong>Жирный</strong
-              ><small>Выделяет текст жирным (Ctrl+B)</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-italic"></i></div>
-            <div class="learning-text">
-              <strong>Курсив</strong><small>Наклоняет текст (Ctrl+I)</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-underline"></i></div>
-            <div class="learning-text">
-              <strong>Подчёркнутый</strong
-              ><small>Добавляет линию под текстом (Ctrl+U)</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-list-ul"></i></div>
-            <div class="learning-text">
-              <strong>Списки</strong
-              ><small>Маркированные и нумерованные списки</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-heading"></i></div>
-            <div class="learning-text">
-              <strong>Заголовки</strong
-              ><small>Выпадающий список для выбора уровня заголовка</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-link"></i></div>
-            <div class="learning-text">
-              <strong>Ссылки</strong
-              ><small>Вставить/удалить гиперссылку (Ctrl+K)</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-code"></i></div>
-            <div class="learning-text">
-              <strong>Режим HTML</strong
-              ><small>Переключение между визуальным редактором и кодом</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-file-import"></i></div>
-            <div class="learning-text">
-              <strong>Загрузка файлов</strong
-              ><small>Поддерживает .txt и .md (Markdown)</small>
-            </div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-folder-open"></i></div>
-            <div class="learning-text">
-              <strong>Вкладки</strong
-              ><small>Работайте с несколькими документами одновременно</small>
-            </div>
-          </div>
         </div>
       </div>
 
       <!-- Редактор -->
       <div class="editor-area">
-        <div class="editor-wrapper">
-          <div id="editor" contenteditable="true" role="textbox">
-            <h2>✨ Добро пожаловать в WebEditor Pro!</h2>
-            <p>
-              Это <strong>продвинутый редактор</strong> с системой вкладок,
-              тёмной темой и загрузкой файлов.
-            </p>
-            <ul>
-              <li>
-                Нажмите <i class="fas fa-plus"></i> чтобы создать новую вкладку
-              </li>
-              <li>
-                Загрузите <strong>.txt</strong> или <strong>.md</strong> файл
-                через кнопку "Открыть файл"
-              </li>
-              <li>
-                Используйте кнопку <i class="fas fa-graduation-cap"></i> для
-                обучения
-              </li>
-            </ul>
-            <p>Переключайтесь между темами и наслаждайтесь редактированием!</p>
-          </div>
-          <textarea
-            id="htmlSource"
-            class="html-textarea"
-            style="display: none"
-            placeholder="Введите HTML-код..."
-          ></textarea>
+        <div id="editor" contenteditable="true" role="textbox">
+          <h2>✨ Добро пожаловать!</h2>
+          <p>
+            Это <strong>продвинутый редактор</strong> с системой вкладок, тёмной
+            темой и загрузкой файлов.
+          </p>
+          <ul>
+            <li>Нажмите <i class="fas fa-plus"></i> для новой вкладки</li>
+            <li>Кнопка <i class="fas fa-question"></i> покажет обучение</li>
+            <li>Загружайте .txt и .md файлы</li>
+          </ul>
+          <p>Выделите текст и используйте кнопки форматирования!</p>
         </div>
+        <textarea
+          id="htmlSource"
+          class="html-textarea"
+          style="display: none"
+          placeholder="Введите HTML-код..."
+        ></textarea>
       </div>
 
       <!-- Нижняя панель -->
       <div class="editor-footer">
         <div class="status">
           <span
-            ><i class="fas fa-file-alt"></i> Символов:
-            <span id="charCount">0</span></span
+            ><i class="fas fa-file-alt"></i>
+            <span id="charCount">0</span> симв.</span
           >
           <span>•</span>
-          <span><i class="fas fa-keyboard"></i> Ctrl+B/I/U/K/Z/Y</span>
+          <span><i class="fas fa-keyboard"></i> Ctrl+B/I/U/K</span>
         </div>
         <div class="actions">
           <input
@@ -714,16 +732,21 @@
             class="file-input"
             accept=".txt,.md,text/plain,text/markdown"
           />
-          <button class="btn" id="openFileBtn">
-            <i class="fas fa-folder-open"></i> Открыть файл
-          </button>
-          <button class="btn" id="exportHtmlBtn">
-            <i class="fas fa-download"></i> Экспорт HTML
-          </button>
-          <button class="btn btn-primary" id="saveFileBtn">
-            <i class="fas fa-save"></i> Сохранить .txt
+          <button class="btn" id="fileActionBtn">
+            <i class="fas fa-folder-open"></i> Файл
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Обучение</h3>
+          <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+        <div id="modalBody"></div>
       </div>
     </div>
 
@@ -731,13 +754,13 @@
       ;(function () {
         'use strict'
 
-        // ----- Состояние приложения -----
+        // Состояние
         let tabs = []
         let activeTabId = null
         let isHtmlMode = false
         let isDarkTheme = false
 
-        // ----- DOM элементы -----
+        // DOM
         const editorDiv = document.getElementById('editor')
         const htmlTextarea = document.getElementById('htmlSource')
         const tabsList = document.getElementById('tabsList')
@@ -748,15 +771,16 @@
         const toggleHtmlBtn = document.getElementById('toggleHtmlMode')
         const clearFormatBtn = document.getElementById('clearFormatBtn')
         const createLinkBtn = document.getElementById('createLinkBtn')
-        const exportHtmlBtn = document.getElementById('exportHtmlBtn')
-        const saveFileBtn = document.getElementById('saveFileBtn')
-        const openFileBtn = document.getElementById('openFileBtn')
+        const fileActionBtn = document.getElementById('fileActionBtn')
         const fileInput = document.getElementById('fileInput')
         const themeToggle = document.getElementById('themeToggle')
-        const toggleLearningBtn = document.getElementById('toggleLearningBtn')
-        const learningPanel = document.getElementById('learningPanel')
+        const showLearningBtn = document.getElementById('showLearningBtn')
+        const modal = document.getElementById('modal')
+        const modalTitle = document.getElementById('modalTitle')
+        const modalBody = document.getElementById('modalBody')
+        const modalClose = document.getElementById('modalClose')
 
-        // ----- Утилиты -----
+        // Утилиты
         function generateId() {
           return (
             'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
@@ -770,39 +794,37 @@
 
         function updateToolbarState() {
           if (isHtmlMode) return
-          const commands = [
+          ;[
             'bold',
             'italic',
             'underline',
             'insertOrderedList',
             'insertUnorderedList'
-          ]
-          commands.forEach(cmd => {
+          ].forEach(cmd => {
             const btn = document.querySelector(`[data-command="${cmd}"]`)
-            if (btn) {
+            if (btn)
               btn.classList.toggle('active', document.queryCommandState(cmd))
-            }
           })
 
           const block = document.queryCommandValue('formatBlock')
-          if (block && formatBlockSelect) {
+          if (block) {
             const normalized = block.toLowerCase()
-            const options = formatBlockSelect.options
-            let matched = false
-            for (let opt of options) {
-              if (opt.value === normalized) {
-                formatBlockSelect.value = normalized
-                matched = true
-                break
+            if (formatBlockSelect) {
+              const options = formatBlockSelect.options
+              for (let opt of options) {
+                if (opt.value === normalized) {
+                  formatBlockSelect.value = normalized
+                  return
+                }
               }
+              formatBlockSelect.value = 'p'
             }
-            if (!matched) formatBlockSelect.value = 'p'
           }
         }
 
         function execCommand(command, value = null) {
           if (isHtmlMode) {
-            alert('Сначала переключитесь в визуальный режим')
+            alert('Переключитесь в визуальный режим')
             return
           }
           editorDiv.focus()
@@ -812,16 +834,41 @@
           saveCurrentTabContent()
         }
 
-        // ----- Управление вкладками -----
+        // Очистка форматирования (исправленная)
+        function clearFormatting() {
+          if (isHtmlMode) return
+          editorDiv.focus()
+
+          // Получаем выделение
+          const selection = window.getSelection()
+          if (!selection.rangeCount) return
+
+          // Удаляем форматирование
+          document.execCommand('removeFormat', false, null)
+
+          // Проверяем, не в списке ли мы
+          const range = selection.getRangeAt(0)
+          let node = range.commonAncestorContainer
+          if (node.nodeType === 3) node = node.parentElement
+
+          // Если мы в списке, конвертируем в параграф
+          const listElement = node.closest('ul, ol')
+          if (listElement) {
+            document.execCommand('formatBlock', false, 'p')
+          }
+
+          updateToolbarState()
+          updateCharCount()
+          saveCurrentTabContent()
+        }
+
+        // Вкладки
         function createTab(name = 'Новый документ', content = '') {
-          const tab = {
+          return {
             id: generateId(),
             name: name,
-            content: content || '<p>Начните писать здесь...</p>',
-            htmlContent: ''
+            content: content || '<p>Начните писать здесь...</p>'
           }
-          tabs.push(tab)
-          return tab
         }
 
         function renderTabs() {
@@ -847,9 +894,7 @@
         }
 
         function switchTab(tabId) {
-          if (activeTabId) {
-            saveCurrentTabContent()
-          }
+          if (activeTabId) saveCurrentTabContent()
           const tab = tabs.find(t => t.id === tabId)
           if (!tab) return
 
@@ -895,13 +940,12 @@
             `Документ ${tabs.length + 1}`,
             '<p>Новый документ</p>'
           )
+          tabs.push(newTab)
           activeTabId = newTab.id
-          editorDiv.innerHTML = newTab.content
-          renderTabs()
-          updateCharCount()
+          switchTab(activeTabId)
         }
 
-        // ----- Режимы (WYSIWYG / HTML) -----
+        // Режимы
         function setMode(htmlMode) {
           isHtmlMode = htmlMode
 
@@ -909,14 +953,13 @@
             htmlTextarea.value = editorDiv.innerHTML
             editorDiv.style.display = 'none'
             htmlTextarea.style.display = 'block'
-            modeIndicator.innerHTML = '<i class="fas fa-code"></i> Режим HTML'
+            modeIndicator.innerHTML = '<i class="fas fa-code"></i> HTML'
             toggleHtmlBtn.classList.add('active')
           } else {
             editorDiv.innerHTML = htmlTextarea.value
             htmlTextarea.style.display = 'none'
             editorDiv.style.display = 'block'
-            modeIndicator.innerHTML =
-              '<i class="fas fa-eye"></i> Визуальный режим'
+            modeIndicator.innerHTML = '<i class="fas fa-eye"></i> Визуальный'
             toggleHtmlBtn.classList.remove('active')
             updateToolbarState()
           }
@@ -924,19 +967,17 @@
           saveCurrentTabContent()
         }
 
-        // ----- Загрузка файлов -----
+        // Загрузка файлов
         function loadFile(file) {
           const reader = new FileReader()
           reader.onload = e => {
             const content = e.target.result
             const fileName = file.name
 
-            // Создаём новую вкладку для файла
             saveCurrentTabContent()
             const newTab = createTab(fileName, '')
 
             if (fileName.endsWith('.md')) {
-              // Простое преобразование Markdown в HTML (базовое)
               let html = content
                 .replace(/^# (.*$)/gim, '<h1>$1</h1>')
                 .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -948,7 +989,6 @@
                 .replace(/\n/g, '<br>')
               newTab.content = `<div>${html}</div>`
             } else {
-              // TXT файл
               newTab.content = `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(
                 content
               )}</pre>`
@@ -959,6 +999,7 @@
             editorDiv.innerHTML = newTab.content
             renderTabs()
             updateCharCount()
+            modal.classList.remove('show')
           }
           reader.readAsText(file)
         }
@@ -969,45 +1010,176 @@
           return div.innerHTML
         }
 
-        // ----- Сохранение файла -----
-        function saveAsFile() {
-          const content = isHtmlMode ? htmlTextarea.value : editorDiv.innerText
-          const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+        // Сохранение файла
+        function saveFile(type) {
+          let content, ext, mime
+
+          if (type === 'html') {
+            content = isHtmlMode ? htmlTextarea.value : editorDiv.innerHTML
+            ext = 'html'
+            mime = 'text/html'
+          } else if (type === 'md') {
+            content = htmlToMarkdown(
+              isHtmlMode ? htmlTextarea.value : editorDiv.innerHTML
+            )
+            ext = 'md'
+            mime = 'text/markdown'
+          } else {
+            content = isHtmlMode ? htmlTextarea.value : editorDiv.innerText
+            ext = 'txt'
+            mime = 'text/plain'
+          }
+
+          const blob = new Blob([content], { type: mime })
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           const tab = tabs.find(t => t.id === activeTabId)
           a.download = tab
-            ? tab.name.replace(/\.(txt|md)$/, '') + '.txt'
-            : 'document.txt'
+            ? tab.name.replace(/\.(txt|md|html)$/, '') + '.' + ext
+            : 'document.' + ext
           a.href = url
           a.click()
           URL.revokeObjectURL(url)
+          modal.classList.remove('show')
         }
 
-        // ----- Переключение темы -----
+        function htmlToMarkdown(html) {
+          let text = html
+          text = text.replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+          text = text.replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+          text = text.replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+          text = text.replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+          text = text.replace(/<b>(.*?)<\/b>/gi, '**$1**')
+          text = text.replace(/<em>(.*?)<\/em>/gi, '*$1*')
+          text = text.replace(/<i>(.*?)<\/i>/gi, '*$1*')
+          text = text.replace(/<li>(.*?)<\/li>/gi, '- $1\n')
+          text = text.replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+          text = text.replace(/<br\s*\/?>/gi, '\n')
+          text = text.replace(/<[^>]+>/g, '')
+          return text.trim()
+        }
+
+        // Тема
         function toggleTheme() {
           isDarkTheme = !isDarkTheme
           document.body.className = isDarkTheme ? 'dark-theme' : 'light-theme'
           const icon = themeToggle.querySelector('i')
-          const span = themeToggle.querySelector('span')
-          if (isDarkTheme) {
-            icon.className = 'fas fa-sun'
-            span.textContent = 'Светлая тема'
-          } else {
-            icon.className = 'fas fa-moon'
-            span.textContent = 'Тёмная тема'
-          }
+          icon.className = isDarkTheme ? 'fas fa-sun' : 'fas fa-moon'
         }
 
-        // ----- Обработчики событий -----
+        // Модальные окна
+        function showFileModal() {
+          modalTitle.innerHTML = '<i class="fas fa-file"></i> Работа с файлом'
+          modalBody.innerHTML = `
+        <div class="save-options">
+          <div class="save-option" id="loadFileOption">
+            <i class="fas fa-upload"></i>
+            <div>
+              <strong>Загрузить файл</strong><br>
+              <small>Поддерживаются .txt и .md</small>
+            </div>
+          </div>
+          <div class="save-option" id="saveTxtOption">
+            <i class="fas fa-file-alt"></i>
+            <div>
+              <strong>Сохранить как TXT</strong><br>
+              <small>Простой текст</small>
+            </div>
+          </div>
+          <div class="save-option" id="saveMdOption">
+            <i class="fab fa-markdown"></i>
+            <div>
+              <strong>Сохранить как Markdown</strong><br>
+              <small>Формат .md</small>
+            </div>
+          </div>
+          <div class="save-option" id="saveHtmlOption">
+            <i class="fas fa-code"></i>
+            <div>
+              <strong>Сохранить как HTML</strong><br>
+              <small>Веб-страница</small>
+            </div>
+          </div>
+        </div>
+      `
+
+          document
+            .getElementById('loadFileOption')
+            .addEventListener('click', () => {
+              modal.classList.remove('show')
+              fileInput.click()
+            })
+          document
+            .getElementById('saveTxtOption')
+            .addEventListener('click', () => saveFile('txt'))
+          document
+            .getElementById('saveMdOption')
+            .addEventListener('click', () => saveFile('md'))
+          document
+            .getElementById('saveHtmlOption')
+            .addEventListener('click', () => saveFile('html'))
+
+          modal.classList.add('show')
+        }
+
+        function showLearningModal() {
+          modalTitle.innerHTML =
+            '<i class="fas fa-graduation-cap"></i> Обучение'
+          modalBody.innerHTML = `
+        <div class="learning-grid">
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-bold"></i></div>
+            <div class="learning-text"><strong>Жирный</strong><small>Выделяет текст жирным (Ctrl+B)</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-italic"></i></div>
+            <div class="learning-text"><strong>Курсив</strong><small>Наклоняет текст (Ctrl+I)</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-underline"></i></div>
+            <div class="learning-text"><strong>Подчёркнутый</strong><small>Линия под текстом (Ctrl+U)</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-list"></i></div>
+            <div class="learning-text"><strong>Списки</strong><small>Маркированные и нумерованные</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-heading"></i></div>
+            <div class="learning-text"><strong>Заголовки</strong><small>Выбор уровня H1-H3</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-link"></i></div>
+            <div class="learning-text"><strong>Ссылки</strong><small>Вставить/удалить (Ctrl+K)</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-code"></i></div>
+            <div class="learning-text"><strong>HTML режим</strong><small>Просмотр и правка кода</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-eraser"></i></div>
+            <div class="learning-text"><strong>Очистка</strong><small>Удаляет форматирование</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-folder-open"></i></div>
+            <div class="learning-text"><strong>Файлы</strong><small>Загрузка .txt/.md и сохранение</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-copy"></i></div>
+            <div class="learning-text"><strong>Вкладки</strong><small>Работа с несколькими документами</small></div>
+          </div>
+        </div>
+      `
+          modal.classList.add('show')
+        }
+
+        // Инициализация
         function init() {
-          // Инициализация первой вкладки
           const initialTab = createTab('Добро пожаловать', editorDiv.innerHTML)
+          tabs.push(initialTab)
           activeTabId = initialTab.id
           renderTabs()
           updateCharCount()
 
-          // Отслеживание изменений
           editorDiv.addEventListener('input', () => {
             if (!isHtmlMode) {
               updateCharCount()
@@ -1023,11 +1195,9 @@
             saveCurrentTabContent()
           })
 
-          // Панель инструментов
           document.querySelector('.toolbar').addEventListener('click', e => {
             const btn = e.target.closest('.tool-btn')
             if (!btn) return
-
             const command = btn.getAttribute('data-command')
             if (command) {
               e.preventDefault()
@@ -1044,55 +1214,33 @@
             if (url) execCommand('createLink', url)
           })
 
-          clearFormatBtn.addEventListener('click', () => {
-            if (isHtmlMode) return
-            execCommand('removeFormat')
-            execCommand('formatBlock', 'p')
-            updateToolbarState()
-          })
+          clearFormatBtn.addEventListener('click', clearFormatting)
 
           formatBlockSelect.addEventListener('change', e => {
             if (isHtmlMode) return
             execCommand('formatBlock', e.target.value)
           })
 
-          // Вкладки
           addTabBtn.addEventListener('click', addNewTab)
-
-          // Режимы
           toggleHtmlBtn.addEventListener('click', () => setMode(!isHtmlMode))
 
-          // Файлы
-          openFileBtn.addEventListener('click', () => fileInput.click())
+          fileActionBtn.addEventListener('click', showFileModal)
           fileInput.addEventListener('change', e => {
             const file = e.target.files[0]
             if (file) loadFile(file)
             fileInput.value = ''
           })
 
-          saveFileBtn.addEventListener('click', saveAsFile)
-
-          exportHtmlBtn.addEventListener('click', () => {
-            const html = isHtmlMode ? htmlTextarea.value : editorDiv.innerHTML
-            navigator.clipboard
-              ?.writeText(html)
-              .then(() => {
-                alert('✅ HTML скопирован в буфер обмена!')
-              })
-              .catch(() => {
-                alert('📋 HTML-код:\n\n' + html)
-              })
-          })
-
-          // Тема
           themeToggle.addEventListener('click', toggleTheme)
+          showLearningBtn.addEventListener('click', showLearningModal)
 
-          // Обучение
-          toggleLearningBtn.addEventListener('click', () => {
-            learningPanel.classList.toggle('show')
+          modalClose.addEventListener('click', () =>
+            modal.classList.remove('show')
+          )
+          modal.addEventListener('click', e => {
+            if (e.target === modal) modal.classList.remove('show')
           })
 
-          // Горячие клавиши
           document.addEventListener('keydown', e => {
             if (!isHtmlMode && (e.ctrlKey || e.metaKey)) {
               const key = e.key.toLowerCase()
@@ -1119,7 +1267,6 @@
             }
           })
 
-          // Наблюдатель за изменениями
           new MutationObserver(() => {
             if (!isHtmlMode) updateCharCount()
           }).observe(editorDiv, {
