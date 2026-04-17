@@ -66,6 +66,8 @@
         --scrollbar-track: #f1f5f9;
         --scrollbar-thumb: #cbd5e1;
         --modal-bg: #ffffff;
+        --selection-bg: #93c5fd;
+        --disabled-opacity: 0.4;
       }
 
       body.dark-theme {
@@ -86,6 +88,19 @@
         --scrollbar-track: #1e2430;
         --scrollbar-thumb: #475569;
         --modal-bg: #2a3241;
+        --selection-bg: #3b82f6;
+        --disabled-opacity: 0.3;
+      }
+
+      /* Кастомное выделение текста */
+      #editor ::selection {
+        background: var(--selection-bg);
+        color: var(--editor-text);
+      }
+
+      #editor ::-moz-selection {
+        background: var(--selection-bg);
+        color: var(--editor-text);
       }
 
       /* Кастомный скроллбар */
@@ -163,21 +178,23 @@
         border: 1px solid var(--border-color);
       }
 
-      /* Вкладки - без горизонтальной прокрутки, с переносом */
+      /* Вкладки с прокруткой */
+      .tabs-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+      }
+
       .tabs-container {
         display: flex;
         align-items: flex-start;
-        background: var(--bg-tertiary);
-        border-bottom: 1px solid var(--border-color);
         padding: 8px 16px 0;
-        flex-wrap: wrap;
-        gap: 4px;
+        min-width: min-content;
       }
 
       .tabs-list {
         display: flex;
-        flex: 1;
-        flex-wrap: wrap;
         gap: 2px;
       }
 
@@ -209,6 +226,18 @@
         color: var(--text-primary);
       }
 
+      .tab-name {
+        cursor: pointer;
+      }
+
+      .tab-name[contenteditable='true'] {
+        background: var(--bg-tertiary);
+        padding: 2px 6px;
+        border-radius: 4px;
+        outline: 1px solid var(--accent-color);
+        color: var(--text-primary);
+      }
+
       .tab-close {
         background: transparent;
         border: none;
@@ -235,7 +264,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-left: 8px;
         margin-bottom: 4px;
+        flex-shrink: 0;
       }
 
       .add-tab-btn:hover {
@@ -277,13 +308,18 @@
         transition: all 0.15s;
       }
 
-      .tool-btn:hover {
+      .tool-btn:hover:not(:disabled) {
         background: var(--tool-btn-hover);
       }
 
       .tool-btn.active {
         background: var(--accent-color);
         color: white;
+      }
+
+      .tool-btn:disabled {
+        opacity: var(--disabled-opacity);
+        cursor: not-allowed;
       }
 
       .select-wrapper {
@@ -305,7 +341,7 @@
         outline: none;
         cursor: pointer;
         border-radius: 20px;
-        min-width: 130px;
+        min-width: 150px;
       }
 
       .select-wrapper select option {
@@ -381,6 +417,13 @@
       #editor a {
         color: var(--accent-color);
       }
+      #editor pre {
+        background: var(--bg-tertiary);
+        padding: 12px;
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        margin: 1em 0;
+      }
 
       /* Модальное окно */
       .modal {
@@ -411,6 +454,7 @@
         overflow-y: auto;
         border: 1px solid var(--border-color);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        color: var(--text-primary);
       }
 
       .modal-header {
@@ -494,6 +538,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        color: var(--text-primary);
       }
 
       .save-option:hover {
@@ -562,6 +607,32 @@
       .file-input {
         display: none;
       }
+
+      /* Уведомление */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--accent-color);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        z-index: 2000;
+        animation: slideIn 0.3s ease;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
     </style>
   </head>
   <body class="light-theme">
@@ -583,11 +654,13 @@
       </div>
 
       <!-- Вкладки -->
-      <div class="tabs-container">
-        <div class="tabs-list" id="tabsList"></div>
-        <button class="add-tab-btn" id="addTabBtn" title="Новая вкладка">
-          <i class="fas fa-plus"></i>
-        </button>
+      <div class="tabs-wrapper">
+        <div class="tabs-container">
+          <div class="tabs-list" id="tabsList"></div>
+          <button class="add-tab-btn" id="addTabBtn" title="Новая вкладка">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Панель инструментов -->
@@ -630,13 +703,23 @@
         </div>
 
         <div class="select-wrapper">
-          <select id="formatBlock" title="Стиль абзаца">
-            <option value="p">📄 Абзац</option>
-            <option value="h1">📌 Заголовок 1</option>
-            <option value="h2">📌 Заголовок 2</option>
-            <option value="h3">📌 Заголовок 3</option>
-            <option value="pre">📋 Моноширинный</option>
+          <select id="formatBlock" title="Стиль текста">
+            <option value="p">📄 Обычный текст</option>
+            <option value="h1">📌 Заголовок</option>
+            <option value="h2">📌 Подзаголовок</option>
+            <option value="h3">📌 Подзаголовок (меньший)</option>
           </select>
+        </div>
+
+        <div class="tool-group">
+          <button
+            class="tool-btn"
+            data-command="formatBlock"
+            data-value="pre"
+            title="Моноширинный текст"
+          >
+            <i class="fas fa-terminal"></i>
+          </button>
         </div>
 
         <div class="tool-group">
@@ -658,14 +741,18 @@
           <button
             class="tool-btn"
             data-command="undo"
+            id="undoBtn"
             title="Отменить (Ctrl+Z)"
+            disabled
           >
             <i class="fas fa-undo"></i>
           </button>
           <button
             class="tool-btn"
             data-command="redo"
+            id="redoBtn"
             title="Повторить (Ctrl+Y)"
+            disabled
           >
             <i class="fas fa-redo"></i>
           </button>
@@ -684,10 +771,10 @@
             id="clearFormatBtn"
             title="Очистить форматирование"
           >
-            <i class="fas fa-eraser"></i>
+            <i class="fas fa-remove-format"></i>
           </button>
           <button class="tool-btn" id="showLearningBtn" title="Обучение">
-            <i class="fas fa-question"></i>
+            <i class="fas fa-graduation-cap"></i>
           </button>
         </div>
       </div>
@@ -697,15 +784,17 @@
         <div id="editor" contenteditable="true" role="textbox">
           <h2>✨ Добро пожаловать!</h2>
           <p>
-            Это <strong>продвинутый редактор</strong> с системой вкладок, тёмной
-            темой и загрузкой файлов.
+            Это <strong>продвинутый редактор</strong> с системой вкладок и
+            тёмной темой.
           </p>
           <ul>
-            <li>Нажмите <i class="fas fa-plus"></i> для новой вкладки</li>
-            <li>Кнопка <i class="fas fa-question"></i> покажет обучение</li>
-            <li>Загружайте .txt и .md файлы</li>
+            <li>Дважды кликните по названию вкладки, чтобы переименовать</li>
+            <li>
+              Кнопка <i class="fas fa-graduation-cap"></i> покажет обучение
+            </li>
+            <li>Форматирование применяется только к выделенному тексту</li>
           </ul>
-          <p>Выделите текст и используйте кнопки форматирования!</p>
+          <p>Попробуйте прямо сейчас!</p>
         </div>
         <textarea
           id="htmlSource"
@@ -722,8 +811,6 @@
             ><i class="fas fa-file-alt"></i>
             <span id="charCount">0</span> симв.</span
           >
-          <span>•</span>
-          <span><i class="fas fa-keyboard"></i> Ctrl+B/I/U/K</span>
         </div>
         <div class="actions">
           <input
@@ -732,8 +819,11 @@
             class="file-input"
             accept=".txt,.md,text/plain,text/markdown"
           />
-          <button class="btn" id="fileActionBtn">
-            <i class="fas fa-folder-open"></i> Файл
+          <button class="btn" id="openFileBtn">
+            <i class="fas fa-folder-open"></i> Открыть
+          </button>
+          <button class="btn btn-primary" id="saveFileBtn">
+            <i class="fas fa-save"></i> Сохранить
           </button>
         </div>
       </div>
@@ -759,6 +849,8 @@
         let activeTabId = null
         let isHtmlMode = false
         let isDarkTheme = false
+        let undoStack = []
+        let redoStack = []
 
         // DOM
         const editorDiv = document.getElementById('editor')
@@ -771,7 +863,8 @@
         const toggleHtmlBtn = document.getElementById('toggleHtmlMode')
         const clearFormatBtn = document.getElementById('clearFormatBtn')
         const createLinkBtn = document.getElementById('createLinkBtn')
-        const fileActionBtn = document.getElementById('fileActionBtn')
+        const openFileBtn = document.getElementById('openFileBtn')
+        const saveFileBtn = document.getElementById('saveFileBtn')
         const fileInput = document.getElementById('fileInput')
         const themeToggle = document.getElementById('themeToggle')
         const showLearningBtn = document.getElementById('showLearningBtn')
@@ -779,6 +872,8 @@
         const modalTitle = document.getElementById('modalTitle')
         const modalBody = document.getElementById('modalBody')
         const modalClose = document.getElementById('modalClose')
+        const undoBtn = document.getElementById('undoBtn')
+        const redoBtn = document.getElementById('redoBtn')
 
         // Утилиты
         function generateId() {
@@ -792,8 +887,15 @@
           charCountSpan.textContent = text.length
         }
 
+        function hasSelection() {
+          const selection = window.getSelection()
+          return selection.toString().length > 0
+        }
+
         function updateToolbarState() {
           if (isHtmlMode) return
+
+          // Обновляем активные состояния кнопок форматирования
           ;[
             'bold',
             'italic',
@@ -806,6 +908,7 @@
               btn.classList.toggle('active', document.queryCommandState(cmd))
           })
 
+          // Обновляем селект формата
           const block = document.queryCommandValue('formatBlock')
           if (block) {
             const normalized = block.toLowerCase()
@@ -820,46 +923,74 @@
               formatBlockSelect.value = 'p'
             }
           }
+
+          // Обновляем кнопки undo/redo
+          updateUndoRedoButtons()
+        }
+
+        function updateUndoRedoButtons() {
+          // Проверяем, можно ли отменить/повторить
+          try {
+            undoBtn.disabled = !document.queryCommandEnabled('undo')
+            redoBtn.disabled = !document.queryCommandEnabled('redo')
+          } catch (e) {
+            undoBtn.disabled = true
+            redoBtn.disabled = true
+          }
         }
 
         function execCommand(command, value = null) {
           if (isHtmlMode) {
-            alert('Переключитесь в визуальный режим')
+            showToast('Переключитесь в визуальный режим')
             return
           }
+
+          if (!hasSelection() && command !== 'undo' && command !== 'redo') {
+            showToast('Выделите текст для форматирования')
+            return
+          }
+
           editorDiv.focus()
           document.execCommand(command, false, value)
           updateToolbarState()
           updateCharCount()
           saveCurrentTabContent()
+          setTimeout(updateUndoRedoButtons, 50)
         }
 
-        // Очистка форматирования (исправленная)
         function clearFormatting() {
           if (isHtmlMode) return
+          if (!hasSelection()) {
+            showToast('Выделите текст для очистки форматирования')
+            return
+          }
+
           editorDiv.focus()
-
-          // Получаем выделение
-          const selection = window.getSelection()
-          if (!selection.rangeCount) return
-
-          // Удаляем форматирование
           document.execCommand('removeFormat', false, null)
 
-          // Проверяем, не в списке ли мы
-          const range = selection.getRangeAt(0)
-          let node = range.commonAncestorContainer
-          if (node.nodeType === 3) node = node.parentElement
+          const selection = window.getSelection()
+          if (selection.rangeCount) {
+            const range = selection.getRangeAt(0)
+            let node = range.commonAncestorContainer
+            if (node.nodeType === 3) node = node.parentElement
 
-          // Если мы в списке, конвертируем в параграф
-          const listElement = node.closest('ul, ol')
-          if (listElement) {
-            document.execCommand('formatBlock', false, 'p')
+            const listElement = node.closest('ul, ol')
+            if (listElement) {
+              document.execCommand('formatBlock', false, 'p')
+            }
           }
 
           updateToolbarState()
           updateCharCount()
           saveCurrentTabContent()
+        }
+
+        function showToast(message) {
+          const toast = document.createElement('div')
+          toast.className = 'toast'
+          toast.textContent = message
+          document.body.appendChild(toast)
+          setTimeout(() => toast.remove(), 2000)
         }
 
         // Вкладки
@@ -877,18 +1008,48 @@
             const tabEl = document.createElement('div')
             tabEl.className = `tab ${tab.id === activeTabId ? 'active' : ''}`
             tabEl.innerHTML = `
-          <span class="tab-name">${tab.name}</span>
+          <span class="tab-name" data-tab-id="${tab.id}">${tab.name}</span>
           <button class="tab-close" data-tab-id="${tab.id}">×</button>
         `
+
+            const nameSpan = tabEl.querySelector('.tab-name')
+            nameSpan.addEventListener('dblclick', e => {
+              e.stopPropagation()
+              nameSpan.contentEditable = true
+              nameSpan.focus()
+            })
+
+            nameSpan.addEventListener('blur', () => {
+              nameSpan.contentEditable = false
+              const newName = nameSpan.textContent.trim()
+              if (newName) {
+                tab.name = newName
+              } else {
+                nameSpan.textContent = tab.name
+              }
+            })
+
+            nameSpan.addEventListener('keydown', e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                nameSpan.blur()
+              }
+            })
+
             tabEl.addEventListener('click', e => {
-              if (!e.target.classList.contains('tab-close')) {
+              if (
+                !e.target.classList.contains('tab-close') &&
+                !e.target.isContentEditable
+              ) {
                 switchTab(tab.id)
               }
             })
+
             tabEl.querySelector('.tab-close').addEventListener('click', e => {
               e.stopPropagation()
               closeTab(tab.id)
             })
+
             tabsList.appendChild(tabEl)
           })
         }
@@ -906,7 +1067,10 @@
           }
           renderTabs()
           updateCharCount()
-          if (!isHtmlMode) updateToolbarState()
+          if (!isHtmlMode) {
+            updateToolbarState()
+            updateUndoRedoButtons()
+          }
         }
 
         function saveCurrentTabContent() {
@@ -919,7 +1083,7 @@
 
         function closeTab(tabId) {
           if (tabs.length <= 1) {
-            alert('Нельзя закрыть последнюю вкладку')
+            showToast('Нельзя закрыть последнюю вкладку')
             return
           }
           const index = tabs.findIndex(t => t.id === tabId)
@@ -999,7 +1163,7 @@
             editorDiv.innerHTML = newTab.content
             renderTabs()
             updateCharCount()
-            modal.classList.remove('show')
+            showToast(`Файл "${fileName}" загружен`)
           }
           reader.readAsText(file)
         }
@@ -1011,6 +1175,44 @@
         }
 
         // Сохранение файла
+        function showSaveModal() {
+          modalTitle.innerHTML = '<i class="fas fa-save"></i> Сохранить как'
+          modalBody.innerHTML = `
+        <div class="save-options">
+          <div class="save-option" data-type="txt">
+            <i class="fas fa-file-alt"></i>
+            <div>
+              <strong>Текстовый документ (.txt)</strong><br>
+              <small>Простой текст без форматирования</small>
+            </div>
+          </div>
+          <div class="save-option" data-type="md">
+            <i class="fab fa-markdown"></i>
+            <div>
+              <strong>Markdown (.md)</strong><br>
+              <small>Формат с разметкой</small>
+            </div>
+          </div>
+          <div class="save-option" data-type="html">
+            <i class="fas fa-code"></i>
+            <div>
+              <strong>HTML документ (.html)</strong><br>
+              <small>Веб-страница</small>
+            </div>
+          </div>
+        </div>
+      `
+
+          modalBody.querySelectorAll('.save-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+              saveFile(opt.dataset.type)
+              modal.classList.remove('show')
+            })
+          })
+
+          modal.classList.add('show')
+        }
+
         function saveFile(type) {
           let content, ext, mime
 
@@ -1040,7 +1242,7 @@
           a.href = url
           a.click()
           URL.revokeObjectURL(url)
-          modal.classList.remove('show')
+          showToast(`Файл сохранён как .${ext}`)
         }
 
         function htmlToMarkdown(html) {
@@ -1067,61 +1269,7 @@
           icon.className = isDarkTheme ? 'fas fa-sun' : 'fas fa-moon'
         }
 
-        // Модальные окна
-        function showFileModal() {
-          modalTitle.innerHTML = '<i class="fas fa-file"></i> Работа с файлом'
-          modalBody.innerHTML = `
-        <div class="save-options">
-          <div class="save-option" id="loadFileOption">
-            <i class="fas fa-upload"></i>
-            <div>
-              <strong>Загрузить файл</strong><br>
-              <small>Поддерживаются .txt и .md</small>
-            </div>
-          </div>
-          <div class="save-option" id="saveTxtOption">
-            <i class="fas fa-file-alt"></i>
-            <div>
-              <strong>Сохранить как TXT</strong><br>
-              <small>Простой текст</small>
-            </div>
-          </div>
-          <div class="save-option" id="saveMdOption">
-            <i class="fab fa-markdown"></i>
-            <div>
-              <strong>Сохранить как Markdown</strong><br>
-              <small>Формат .md</small>
-            </div>
-          </div>
-          <div class="save-option" id="saveHtmlOption">
-            <i class="fas fa-code"></i>
-            <div>
-              <strong>Сохранить как HTML</strong><br>
-              <small>Веб-страница</small>
-            </div>
-          </div>
-        </div>
-      `
-
-          document
-            .getElementById('loadFileOption')
-            .addEventListener('click', () => {
-              modal.classList.remove('show')
-              fileInput.click()
-            })
-          document
-            .getElementById('saveTxtOption')
-            .addEventListener('click', () => saveFile('txt'))
-          document
-            .getElementById('saveMdOption')
-            .addEventListener('click', () => saveFile('md'))
-          document
-            .getElementById('saveHtmlOption')
-            .addEventListener('click', () => saveFile('html'))
-
-          modal.classList.add('show')
-        }
-
+        // Обучение
         function showLearningModal() {
           modalTitle.innerHTML =
             '<i class="fas fa-graduation-cap"></i> Обучение'
@@ -1129,43 +1277,43 @@
         <div class="learning-grid">
           <div class="learning-item">
             <div class="learning-icon"><i class="fas fa-bold"></i></div>
-            <div class="learning-text"><strong>Жирный</strong><small>Выделяет текст жирным (Ctrl+B)</small></div>
+            <div class="learning-text"><strong>Жирный</strong><small>Выделите текст и нажмите (Ctrl+B)</small></div>
           </div>
           <div class="learning-item">
             <div class="learning-icon"><i class="fas fa-italic"></i></div>
-            <div class="learning-text"><strong>Курсив</strong><small>Наклоняет текст (Ctrl+I)</small></div>
+            <div class="learning-text"><strong>Курсив</strong><small>Наклоняет выделенный текст (Ctrl+I)</small></div>
           </div>
           <div class="learning-item">
             <div class="learning-icon"><i class="fas fa-underline"></i></div>
-            <div class="learning-text"><strong>Подчёркнутый</strong><small>Линия под текстом (Ctrl+U)</small></div>
+            <div class="learning-text"><strong>Подчёркнутый</strong><small>Линия под выделенным текстом (Ctrl+U)</small></div>
           </div>
           <div class="learning-item">
             <div class="learning-icon"><i class="fas fa-list"></i></div>
-            <div class="learning-text"><strong>Списки</strong><small>Маркированные и нумерованные</small></div>
+            <div class="learning-text"><strong>Списки</strong><small>Создайте маркированный или нумерованный список</small></div>
           </div>
           <div class="learning-item">
             <div class="learning-icon"><i class="fas fa-heading"></i></div>
-            <div class="learning-text"><strong>Заголовки</strong><small>Выбор уровня H1-H3</small></div>
+            <div class="learning-text"><strong>Заголовки</strong><small>Выберите уровень: заголовок, подзаголовок</small></div>
+          </div>
+          <div class="learning-item">
+            <div class="learning-icon"><i class="fas fa-terminal"></i></div>
+            <div class="learning-text"><strong>Моноширинный</strong><small>Текст с фиксированной шириной символов</small></div>
           </div>
           <div class="learning-item">
             <div class="learning-icon"><i class="fas fa-link"></i></div>
-            <div class="learning-text"><strong>Ссылки</strong><small>Вставить/удалить (Ctrl+K)</small></div>
+            <div class="learning-text"><strong>Ссылки</strong><small>Вставить или удалить гиперссылку (Ctrl+K)</small></div>
           </div>
           <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-code"></i></div>
-            <div class="learning-text"><strong>HTML режим</strong><small>Просмотр и правка кода</small></div>
+            <div class="learning-icon"><i class="fas fa-remove-format"></i></div>
+            <div class="learning-text"><strong>Очистка</strong><small>Удаляет форматирование с выделенного текста</small></div>
           </div>
           <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-eraser"></i></div>
-            <div class="learning-text"><strong>Очистка</strong><small>Удаляет форматирование</small></div>
+            <div class="learning-icon"><i class="fas fa-undo"></i></div>
+            <div class="learning-text"><strong>Отмена/Повтор</strong><small>Кнопки темнеют, если действие недоступно</small></div>
           </div>
           <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-folder-open"></i></div>
-            <div class="learning-text"><strong>Файлы</strong><small>Загрузка .txt/.md и сохранение</small></div>
-          </div>
-          <div class="learning-item">
-            <div class="learning-icon"><i class="fas fa-copy"></i></div>
-            <div class="learning-text"><strong>Вкладки</strong><small>Работа с несколькими документами</small></div>
+            <div class="learning-icon"><i class="fas fa-pencil-alt"></i></div>
+            <div class="learning-text"><strong>Переименование</strong><small>Дважды кликните по названию вкладки</small></div>
           </div>
         </div>
       `
@@ -1188,8 +1336,18 @@
             }
           })
 
-          editorDiv.addEventListener('keyup', updateToolbarState)
-          editorDiv.addEventListener('mouseup', updateToolbarState)
+          editorDiv.addEventListener('keyup', () => {
+            updateToolbarState()
+            updateUndoRedoButtons()
+          })
+
+          editorDiv.addEventListener('mouseup', () => {
+            updateToolbarState()
+            updateUndoRedoButtons()
+          })
+
+          editorDiv.addEventListener('focus', updateUndoRedoButtons)
+
           htmlTextarea.addEventListener('input', () => {
             updateCharCount()
             saveCurrentTabContent()
@@ -1198,16 +1356,23 @@
           document.querySelector('.toolbar').addEventListener('click', e => {
             const btn = e.target.closest('.tool-btn')
             if (!btn) return
+
             const command = btn.getAttribute('data-command')
+            const value = btn.getAttribute('data-value')
+
             if (command) {
               e.preventDefault()
-              execCommand(command)
+              execCommand(command, value)
             }
           })
 
           createLinkBtn.addEventListener('click', () => {
             if (isHtmlMode) {
-              alert('Вставка ссылки доступна только в визуальном режиме')
+              showToast('Вставка ссылки доступна только в визуальном режиме')
+              return
+            }
+            if (!hasSelection()) {
+              showToast('Выделите текст для создания ссылки')
               return
             }
             const url = prompt('Введите URL ссылки:', 'https://')
@@ -1218,18 +1383,25 @@
 
           formatBlockSelect.addEventListener('change', e => {
             if (isHtmlMode) return
+            if (!hasSelection()) {
+              showToast('Выделите текст для изменения стиля')
+              formatBlockSelect.value = 'p'
+              return
+            }
             execCommand('formatBlock', e.target.value)
           })
 
           addTabBtn.addEventListener('click', addNewTab)
           toggleHtmlBtn.addEventListener('click', () => setMode(!isHtmlMode))
 
-          fileActionBtn.addEventListener('click', showFileModal)
+          openFileBtn.addEventListener('click', () => fileInput.click())
           fileInput.addEventListener('change', e => {
             const file = e.target.files[0]
             if (file) loadFile(file)
             fileInput.value = ''
           })
+
+          saveFileBtn.addEventListener('click', showSaveModal)
 
           themeToggle.addEventListener('click', toggleTheme)
           showLearningBtn.addEventListener('click', showLearningModal)
@@ -1255,6 +1427,10 @@
                 execCommand('underline')
               } else if (key === 'k') {
                 e.preventDefault()
+                if (!hasSelection()) {
+                  showToast('Выделите текст для создания ссылки')
+                  return
+                }
                 const url = prompt('Введите URL ссылки:')
                 if (url) execCommand('createLink', url)
               } else if (key === 'z') {
@@ -1274,6 +1450,9 @@
             subtree: true,
             characterData: true
           })
+
+          // Инициализация кнопок undo/redo
+          setTimeout(updateUndoRedoButtons, 100)
         }
 
         init()
